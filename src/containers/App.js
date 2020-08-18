@@ -1,42 +1,49 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import CardList from '../components/CardList';
 import Searchbox from '../components/Searchbox';
 import Scroll from '../components/Scroll';
 import ErrorBoundary from '../components/ErrorBoundary';
 
-class App extends React.Component {
-  constructor() {
-    super()
-    this.state ={
-      robots: [],
-      searchfield: ''
-    }
+import { setSearchField, requestMonsters } from '../actions';
+
+const mapStateToProps = state => {
+  return {
+    searchField: state.searchMonsters.searchField,
+    monsters: state.requestMonsters.monsters,
+    isPending: state.requestMonsters.isPending,
+    error: state.requestMonsters.error
   }
+}
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    onSearchChange: (event) => dispatch(setSearchField(event.target.value)),
+    onRequestMonsters: () => dispatch(requestMonsters())
+  }
+}
+
+class App extends React.Component {
+
 
   componentDidMount() {
-    fetch('https://jsonplaceholder.typicode.com/users')
-      .then(response=> response.json())
-      .then(users => this.setState({ robots: users }));
-  }
-
-  onSearchChange = (event) => {
-    this.setState({ searchfield: event.target.value})
+    this.props.onRequestMonsters();
   }
 
   render() {
-    const { robots, searchfield } = this.state;
-    const filteredRobots = robots.filter(robots => {
-      return robots.name.toLowerCase().includes(searchfield.toLowerCase());
+    const {searchField, onSearchChange, monsters, isPending} = this.props;
+    const filteredMonsters = monsters.filter(monster => {
+      return monster.name.toLowerCase().includes(searchField.toLowerCase());
     })
-    return (!robots.length) ?
+    return isPending ?
     <h1 className='tc'>Loading</h1> :
     (
       <div className='tc'>
         <h1 className='f1'>Monster friends</h1>
-        <Searchbox searchChange={this.onSearchChange}/>
+        <Searchbox searchChange={onSearchChange}/>
         <Scroll>
           <ErrorBoundary>
-            <CardList robots={filteredRobots}/>
+            <CardList robots={filteredMonsters}/>
           </ErrorBoundary>
         </Scroll>
       </div>
@@ -44,4 +51,4 @@ class App extends React.Component {
   }
 }
 
-export default App;
+export default connect(mapStateToProps, mapDispatchToProps)(App);
